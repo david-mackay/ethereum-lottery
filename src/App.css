@@ -54,3 +54,63 @@ input[type="number"]:focus {
 .button-spinning {
     animation: spinning 2s linear infinite;
 }
+
+.spinner {
+    border: 4px solid rgba(255, 255, 255, 0.3);
+    border-top: 4px solid #fff;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.button-container button:disabled {
+    background-color: #888;
+    cursor: not-allowed;
+}
+
+/* Enhance the button and input field */
+button, input[type="number"] {
+    transition: all 0.3s ease;
+}
+
+button:hover, input[type="number"]:hover {
+    transform: scale(1.05);
+}
+
+button:active {
+    transform: scale(0.95);
+}
+
+.jackpot {
+    font-size: 2em; /* Larger font size */
+    color: #FFD700; /* Gold color */
+    font-weight: bold;
+    margin: 10px 0;
+    text-shadow: 1px 1px 2px #000; /* Subtle shadow for depth */
+}
+
+/* Additional styling for emphasis */
+.jackpot:before {
+    content: "💰 "; /* Unicode character for a money bag */
+}
+
+.jackpot:after {
+    content: " ETH";
+}
+.contract-number {
+    font-family: 'Courier New', Courier, monospace; /* Monospace font */
+    background-color: #333;
+    color: #0F0; /* Bright green, like old terminal displays */
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-size: 1.2em;
+    margin: 5px 0;
+    display: inline-block;
+    box-shadow: 1px 1px 3px rgba(0, 255, 0, 0.5); /* Green glow */
+}

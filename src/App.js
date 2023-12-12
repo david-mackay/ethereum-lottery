@@ -1,6 +1,6 @@
 import './App.css';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { ethers } from 'ethers';
 
 // Replace with your contract ABI and address
@@ -137,15 +137,20 @@ const contractABI = [
 			"type": "receive"
 		}
 	];
-const contractAddress = '0xcad3fcd3eff63f44384f4ee79256b028eabffe46';
+
 
 function App() {
+	const contractAddress = '0xcad3fcd3eff63f44384f4ee79256b028eabffe46';
     const [provider, setProvider] = useState(null);
     const [lotteryContract, setLotteryContract] = useState(null);
     const [playerNumber, setPlayerNumber] = useState('');
     const [message, setMessage] = useState('');
     const [gameResult, setGameResult] = useState(null);
 	const [isTransactionInProgress, setIsTransactionInProgress] = useState(false);
+	const [displayNumber, setDisplayNumber] = useState("00");
+	const [jackpotAmount, setJackpotAmount] = useState('0');
+
+
 
     // Function to connect to MetaMask wallet
     const connectWallet = async () => {
@@ -167,6 +172,23 @@ function App() {
         }
     };
 
+	const fetchAndUpdateJackpot = useCallback(async () => {
+        if (provider && contractAddress) {
+            try {
+                const balance = await provider.getBalance(contractAddress);
+                const jackpot = ethers.utils.formatEther(balance) / 2;
+                setJackpotAmount(jackpot.toFixed(4)); // Displaying up to 4 decimal places
+            } catch (error) {
+                console.error('Error fetching contract balance:', error);
+            }
+        }
+    }, [provider, contractAddress]); // Dependencies for useCallback
+
+    useEffect(() => {
+        fetchAndUpdateJackpot();
+    }, [fetchAndUpdateJackpot]); // Dependency array includes the memoized function
+
+
     // Function to handle the number input change
     const handleNumberChange = (e) => {
         setPlayerNumber(e.target.value);
@@ -181,11 +203,13 @@ function App() {
 	
 		try {
 			setIsTransactionInProgress(true);
+        	numberAnimationInterval = startNumberAnimation();
 			// Set up the listener before sending the transaction
 			lotteryContract.on("Played", (player, playerNumber, contractNumber) => {
 				provider.getSigner().getAddress().then(currentAddress => {
 					if (player.toLowerCase() === currentAddress.toLowerCase()) {
 						setGameResult({ playerNumber, contractNumber });
+						setDisplayNumber(contractNumber.toString().padStart(2, '0')); // This line sets the displayed contract number
 						setMessage(`Your Number: ${playerNumber}, Contract Number: ${contractNumber}`);
 					}
 				});
@@ -194,18 +218,44 @@ function App() {
 			const tx = await lotteryContract.play(playerNumber, { value: ethers.utils.parseEther("0.001") });
 			await tx.wait();
 			setIsTransactionInProgress(false);
+			fetchAndUpdateJackpot();
+			clearInterval(numberAnimationInterval);
+			setDisplayNumber(gameResult.contractNumber.toString().padStart(2, '0'));
 			setMessage(`Transaction successful. Hash: ${tx.hash}`);
 		} catch (error) {
-			alert(error.message);
+			console.error(error)
+			alert(error.reason);
 			setMessage('Transaction failed.');
 			setIsTransactionInProgress(false);
+			clearInterval(numberAnimationInterval);
 		}
+	
 	};
+
+	const renderPlayButtonContent = () => {
+        if (isTransactionInProgress) {
+            return <div className="spinner"></div>; // Show spinner when transaction is in progress
+        }
+        return 'Play';
+    };
 	
-	
+	const startNumberAnimation = () => {
+		return setInterval(() => {
+			const randomNum = Math.floor(Math.random() * 99) + 1;
+			setDisplayNumber(String(randomNum).padStart(2, '0'));
+		}, 42); // Change number every 100ms
+	};
+
+	let numberAnimationInterval;
 
     return (
 		<div className="app-container">
+			<div>
+            <p className="jackpot">Current Jackpot: {jackpotAmount}</p>
+        </div>
+        <div>
+            <p className="contract-number">Contract Number: {displayNumber}</p>
+        </div>
 		<div className="button-container">
 			<button onClick={connectWallet}>Connect Wallet</button>
 		</div>
@@ -215,10 +265,9 @@ function App() {
 		<div className="button-container">
                 <button 
                     onClick={handlePlay}
-                    disabled={isTransactionInProgress} // Disabling the button during a transaction
-                    className={isTransactionInProgress ? "button-spinning" : ""}
+                    disabled={isTransactionInProgress}
                 >
-                    {isTransactionInProgress ? 'Processing...' : 'Play'} {/* Changing the button text */}
+                    {renderPlayButtonContent()}
                 </button>
             </div>
 	
