@@ -1,3 +1,5 @@
+import './App.css';
+
 import React, { useState } from 'react';
 import { ethers } from 'ethers';
 
@@ -194,7 +196,7 @@ function App() {
 			setIsTransactionInProgress(false);
 			setMessage(`Transaction successful. Hash: ${tx.hash}`);
 		} catch (error) {
-			console.error(error);
+			alert(error.message);
 			setMessage('Transaction failed.');
 			setIsTransactionInProgress(false);
 		}
@@ -203,16 +205,22 @@ function App() {
 	
 
     return (
-	<div className="app-container">
-    	<div className="button-container">
-        	<button onClick={connectWallet}>Connect Wallet</button>
-	    </div>
-    	<div className="input-container">
-	        <input type="number" value={playerNumber} onChange={handleNumberChange} placeholder="Enter a number (1-99)" />
-	    </div>
-	    <div className="button-container">
-	        <button onClick={handlePlay}>Play</button>
-	    </div>
+		<div className="app-container">
+		<div className="button-container">
+			<button onClick={connectWallet}>Connect Wallet</button>
+		</div>
+		<div className="input-container">
+			<input type="number" value={playerNumber} onChange={handleNumberChange} placeholder="Enter a number (1-99)" />
+		</div>
+		<div className="button-container">
+                <button 
+                    onClick={handlePlay}
+                    disabled={isTransactionInProgress} // Disabling the button during a transaction
+                    className={isTransactionInProgress ? "button-spinning" : ""}
+                >
+                    {isTransactionInProgress ? 'Processing...' : 'Play'} {/* Changing the button text */}
+                </button>
+            </div>
 	
 	    {message && <p>{message}</p>}
 
